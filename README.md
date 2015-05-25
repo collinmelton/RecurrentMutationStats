@@ -1,2 +1,2 @@
 # RecurrentMutationStats
-This contains code for statistical analysis of recurrent mutations in whole genome sequencing data. This analysis is multistep and I've attempted here to wrap them into a single program (Main.py); however, it may be logistically easier for the end user to run some steps independently. 
+This contains code for statistical analysis of recurrent mutations in whole genome sequencing data. This code is a work in progress, as I am attempting to make it more user friendly. 
