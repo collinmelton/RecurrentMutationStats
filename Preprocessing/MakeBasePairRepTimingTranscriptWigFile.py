@@ -121,6 +121,14 @@ def run(fastaWigFile, cExonFiles, cIntronFiles, ncExonFiles, ncIntronFiles, repT
     f.write(fw.getWigHeader())
     p=fw.walk()
     i=0
+#     print "starting test"
+#     print gencodeTranscripts.getGencodeAnnotation("22", 25150831)
+#     print gencodeTranscripts.getGencodeAnnotation("22", 25150832)
+#     print gencodeTranscripts.getGencodeAnnotation("22", 25150833)
+#     print gencodeTranscripts.getGencodeAnnotation("22", 25150831+81)
+#     print gencodeTranscripts.getGencodeAnnotation("22", 25150831+80)
+#     print gencodeTranscripts.getGencodeAnnotation("22", 25150831+82)
+    
     while p!=None:
         i+=1
         val, chrom, pos=p
@@ -138,7 +146,7 @@ def run(fastaWigFile, cExonFiles, cIntronFiles, ncExonFiles, ncIntronFiles, repT
         else:
             f.write("\n"+"_".join([str(val), str(repTiming), str(gencodeAnnotation)]))
         p=fw.walk()
-        #if i==100000: break
+#        if i==100000: break
     f.close()
     
 
@@ -146,11 +154,11 @@ def run(fastaWigFile, cExonFiles, cIntronFiles, ncExonFiles, ncIntronFiles, repT
 def getOptions():
     parser = OptionParser()
     parser.add_option("--I", dest = "inputFile", help = "input file in wig format",
-                      metavar = "FILE", type = "string", default = "hs37d5.triplets.22.wig.gz")#"/Users/cmelton/Downloads/hs37d5.CG_TA.1.wig")
+                      metavar = "FILE", type = "string", default = "./AnnotationWigs/humang1kv37.singlets22.wig.gz")#"/Users/cmelton/Downloads/hs37d5.CG_TA.1.wig")
     parser.add_option("--O", dest="outputFile", help = "output file is a tab delimited file of key and count",
-                      metavar = "FILE", type = "string", default = "testout_overlapwig.out")
+                      metavar = "FILE", type = "string", default = "overlap.22.out")
     parser.add_option("--D", dest = "WigDirectory", help = "path to directory of reference wig files"+
-                      "concurrently", metavar = "FILE", default = "/Users/cmelton/Documents/Lab/SnyderLab/LocalMutationRate/WigFiles/", type = "string") #"/srv/gsfs0/projects/snyder/collinmelton/RecurrentMutationDecectionAlgorithm/Wigs/", type = "string" )#
+                      "concurrently", metavar = "FILE", default = "./AnnotationWigs/", type = "string") #"/srv/gsfs0/projects/snyder/collinmelton/RecurrentMutationDecectionAlgorithm/Wigs/", type = "string" )#
     parser.add_option("--C", dest = "Chrom", help = "chromosome to use", metavar = "FILE", 
                   default = "22", type = "string")
     parser.add_option("--E", dest = "useEpi", help = "whether to use epigenome wigs", metavar = "FILE", 
@@ -182,10 +190,10 @@ def runMain():
     cExonfilePrefixes=["protein_coding_exonInfo", "codingtest"]
     cIntronfilePrefixes=["protein_coding_intronInfo", "codingintrontest"]
     #gencodeFiles=map(lambda x: os.path.join(directory, x+"."+options.Chrom+".wig"), filePrefixes)
-    cExonFiles=map(lambda x: os.path.join(directory+"Other/", x+"."+options.Chrom+".wig.gz"), cExonfilePrefixes)
-    cIntronFiles=map(lambda x: os.path.join(directory+"Other/", x+"."+options.Chrom+".wig.gz"), cIntronfilePrefixes)
-    ncExonFiles=map(lambda x: os.path.join(directory+"Other/", x+"."+options.Chrom+".wig.gz"), ncExonfilePrefixes)
-    ncIntronFiles=map(lambda x: os.path.join(directory+"Other/", x+"."+options.Chrom+".wig.gz"), ncIntronfilePrefixes)
+    cExonFiles=map(lambda x: os.path.join(directory+"", x+"."+options.Chrom+".wig.gz"), cExonfilePrefixes)
+    cIntronFiles=map(lambda x: os.path.join(directory+"", x+"."+options.Chrom+".wig.gz"), cIntronfilePrefixes)
+    ncExonFiles=map(lambda x: os.path.join(directory+"", x+"."+options.Chrom+".wig.gz"), ncExonfilePrefixes)
+    ncIntronFiles=map(lambda x: os.path.join(directory+"", x+"."+options.Chrom+".wig.gz"), ncIntronfilePrefixes)
     
     # epigenome files
     if options.useEpi=="T":
@@ -198,10 +206,3 @@ def runMain():
     
 runMain()
     
-    
-    
-#print gencodeFiles
-
-
-
-

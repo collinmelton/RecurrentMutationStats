@@ -140,7 +140,7 @@ def GetMutationCovariates(MutationFiles, CombinedCovariateFile, parallel, grid):
     for sample in MutationFiles.values():
         commands.append("python "+CONVERT_TO_WIG_PROGRAM+" --I "+sample["MutationFile"]+" --O "+sample["MutationWigFile"])
     RunCommands(commands, parallel, grid)
-     
+      
     # get covariates
     commands=[]
     for sample in MutationFiles.values():
@@ -150,7 +150,7 @@ def GetMutationCovariates(MutationFiles, CombinedCovariateFile, parallel, grid):
     # combine into summary file
     commands=[]
     for sample in MutationFiles.values():
-        commands.append("Rscript "+COLLAPSE_MUT_COVARIATE_DATA_PROGRAM+" "+sample["MutationCovariateFile"]+" "+sample["MutationCovariateSummaryFile"])
+        commands.append("/usr/local/bin/Rscript "+COLLAPSE_MUT_COVARIATE_DATA_PROGRAM+" "+sample["MutationCovariateFile"]+" "+sample["MutationCovariateSummaryFile"])
     RunCommands(commands, parallel, grid)
     
 # get covariate totals for whole genome
@@ -163,18 +163,19 @@ def GetWholeGenomeCovariates(MutationFiles, CombinedCovariateFile, parallel, gri
     # combine into summary file
     commands=[]
     for sample in MutationFiles.values():
-        commands.append("Rscript "+FORMAT_PATIENT_MODEL_DATA_PROGRAM+" "+sample["WGCovariateFile"]+" "+sample["MutationCovariateSummaryFile"]+" "+sample["ModelData"]+" "+sample["pid"])
+        commands.append("/usr/local/bin/Rscript "+FORMAT_PATIENT_MODEL_DATA_PROGRAM+" "+sample["WGCovariateFile"]+" "+sample["MutationCovariateSummaryFile"]+" "+sample["ModelData"]+" "+sample["pid"])
     RunCommands(commands, parallel, grid)
     
 # fit the logistic regression sample specific probability model
 def GenerateLRModel(MutationFiles, LRModelName):
     modeldata="|".join(map(lambda sample:sample["ModelData"], MutationFiles.values()))
     print modeldata
-    subprocess.call("Rscript "+LOGISTICREGRESSION_MODEL_PROGRAM+" '"+modeldata+"' '"+LRModelName+"'", shell=True)
+    subprocess.call("/usr/local/bin/Rscript "+LOGISTICREGRESSION_MODEL_PROGRAM+" '"+modeldata+"' '"+LRModelName+"'", shell=True)
 
 # combine mutations into a single file with chrom pos and count info
 def MergeMutations(MutationFiles, MergedMutationFilename, splitByChrom=True):
-    mutationFiles="||".join(map(lambda sample: sample["pid"]+"|"+sample["MutationFile"], MutationFiles.values()))
+    mutationFiles="||".join(map(lambda sample: sample["pid"]+"|"+sample["MutationCovariateFile"], MutationFiles.values()))
+    print mutationFiles
     if splitByChrom:
         subprocess.call("python "+MERGE_MUTATIONS_PROGRAM+" --I '"+mutationFiles+"' --O "+MergedMutationFilename+" --S T", shell=True)
     else:
@@ -185,7 +186,7 @@ def GetSampleSpecificMutationProbs(MergedMutationFilename, LRModelName, parallel
     MergedMutationFilenames=["/".join(MergedMutationFilename.split("/")[0:-1])+"/"+x for x in os.listdir("/".join(MergedMutationFilename.split("/")[0:-1])) if MergedMutationFilename.split("/")[-1] in x]
     commands=[]
     for filename in MergedMutationFilenames:
-        commands.append("Rscript "+COMPUTE_MERGED_MUTATION_PROBS_PROGRAM+" "+filename+" "+LRModelName+" "+filename+".prob.tsv")
+        commands.append("/usr/local/bin/Rscript "+COMPUTE_MERGED_MUTATION_PROBS_PROGRAM+" "+filename+" "+LRModelName+" "+filename+".prob.tsv")
     RunCommands(commands, parallel, grid)
         
 # Combine sample specific probabilitites with Poisson Binomial to get Recurrence Probabilities
@@ -195,7 +196,7 @@ def ComputePoissonBinomialProbs(MergedMutationFilename, parallel, grid, regionSi
     for filename in MergedMutationProbFilenames:
         numberOfMutationsPerSiteData=filename[0:-9]
         outputCSVFile="'"+filename+".poibin.csv"+"'"
-        commands.append("Rscript "+POISSONBINOMIAL_RECURRENT_PROB_PROGRAM+" "+filename+" "+numberOfMutationsPerSiteData+" "+outputCSVFile+" "+regionSize)
+        commands.append("/usr/local/bin/Rscript "+POISSONBINOMIAL_RECURRENT_PROB_PROGRAM+" "+filename+" "+numberOfMutationsPerSiteData+" "+outputCSVFile+" "+regionSize)
     RunCommands(commands, parallel, grid)
 
 # this functions gets the command line options for running the program
@@ -206,7 +207,7 @@ def getOptions():
     parser.add_option("--C", dest = "CovariateFileListFile", help = "this should be a tab delimited file with covariate file name and file location",
                       metavar = "STRING", type = "string", default = "")
     parser.add_option("--CC", dest = "CombinedCovariateFile", help = "this should be a filename for the combined covariates",
-                      metavar = "STRING", type = "string", default = "./CovariateStats/TestData/mergedBPRepTimingTranscript.wig.gz")#"./CovariateStats/TestData/mergedBPRepTimingTranscript.22.wig.gz")
+                      metavar = "STRING", type = "string", default = "./Preprocessing/overlap.22.out") #./CovariateStats/TestData/mergedBPRepTimingTranscript.wig.gz")#"./CovariateStats/TestData/mergedBPRepTimingTranscript.22.wig.gz")
     parser.add_option("--LR", dest = "LRModelName", help = "this should be a filename for the fitted logistic regression model",
                       metavar = "STRING", type = "string", default = "./Temp/LRModel")
     parser.add_option("--P", dest = "parallel", help = "the number of jobs to run in parallel",
@@ -227,7 +228,7 @@ if __name__ == '__main__':
     # get options
     options = getOptions()
     
-    #initialize grid engine if needed
+    #initialize grid engine if needed, not implemented here yet
     grid=None
     if options.grid=="T":
         pass
@@ -237,25 +238,27 @@ if __name__ == '__main__':
         # get a dictionary of patient id and mutation file
         MutationFiles=GetFiles(options.MutationFileListFile)
         print MutationFiles
-#         # Preprocess to get combined covariate file
-#         CovariateFiles=GetFiles(options.CovariateFileListFile)
-#         CombineCovariates(CovariateFiles, options.CombinedCovariateFile)
-#          
-#         # Get Mutation Covariates
-#         GetMutationCovariates(MutationFiles, options.CombinedCovariateFile, int(options.parallel), grid)
-#          
-#         # Get Whole Genome Covariates
-#         GetWholeGenomeCovariates(MutationFiles, options.CombinedCovariateFile, int(options.parallel), grid)
-#          
-#         # Generate LR Sample Specific Probability Model
-#         GenerateLRModel(MutationFiles, options.LRModelName)
-#          
-#         # Get Merged Mutations
-#         MergeMutations(MutationFiles, options.MergedMutationFilename, splitByChrom=True)
-#          
-#         # Get Sample Specific Probabilities
-#         GetSampleSpecificMutationProbs(options.MergedMutationFilename, options.LRModelName, int(options.parallel), grid)
-#          
+        
+        # not implemented here yet, see preprocessing folder
+        # Preprocess to get combined covariate file
+        # CovariateFiles=GetFiles(options.CovariateFileListFile)
+        # CombineCovariates(CovariateFiles, options.CombinedCovariateFile)
+          
+        # Get Covariates for Mutations
+        GetMutationCovariates(MutationFiles, options.CombinedCovariateFile, int(options.parallel), grid)
+           
+        # Get Covariates for the Whole Genome 
+        GetWholeGenomeCovariates(MutationFiles, options.CombinedCovariateFile, int(options.parallel), grid)
+           
+        # Generate Logistic Regression Sample Specific Probability Model
+        GenerateLRModel(MutationFiles, options.LRModelName)
+           
+        # Get mutation counts for each mutation across samples
+        MergeMutations(MutationFiles, options.MergedMutationFilename, splitByChrom=True)
+           
+        # Get Sample Specific Probabilities
+        GetSampleSpecificMutationProbs(options.MergedMutationFilename, options.LRModelName, int(options.parallel), grid)
+           
         # Compute Poisson Binomial Recurrence Probabilities
         ComputePoissonBinomialProbs(options.MergedMutationFilename, int(options.parallel), grid, regionSize="'"+options.regionSize+"'")
 

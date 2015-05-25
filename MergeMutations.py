@@ -16,6 +16,7 @@ def GetMutationsFromFile(inputFile, pid, merged):
     line=f.readline()
     while line!="":
         vals=line.strip().split("\t")
+#         print vals
         chrom, pos, covered, bpType, replicationTiming, transcriptType=vals[0:6]
         chrom_pos="chr"+chrom+"_"+pos
         if chrom_pos not in merged:
@@ -70,5 +71,6 @@ def getOptions():
 if __name__ == '__main__':
     # get options
     options = getOptions()
+    print options
     pids, mergedMutations=getMergedMutations(options.inputs.split("||"))
     writeOutput(pids, mergedMutations, options.output, options.splitByChrom)

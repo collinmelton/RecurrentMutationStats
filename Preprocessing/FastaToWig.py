@@ -59,9 +59,9 @@ def run(input, output, tripletsVersusSinglets=True):
 def getOptions():
     parser = OptionParser()
     parser.add_option("--I", dest="input", help = "path plus input file prefix",
-                      metavar = "FILE", type = "string", default="/Users/cmelton/Documents/GenomeReference/test.fasta") #human_g1k_v37.fasta")#default = "/srv/gs1/projects/snyder/collinmelton/bundle/2.3/b37/d5/hs37d5.fa")#
+                      metavar = "FILE", type = "string", default="/Users/cmelton/Documents/GenomeReference/human_g1k_v37.fasta") #human_g1k_v37.fasta")#default = "/srv/gs1/projects/snyder/collinmelton/bundle/2.3/b37/d5/hs37d5.fa")#
     parser.add_option("--O", dest="output", help="path and name of output file",
-                      metavar="FILE", type="string", default="/Users/cmelton/Documents/GenomeReference/test.triplets.")#"/srv/gsfs0/projects/snyder/collinmelton/RecurrentMutationDecectionAlgorithm/WholeGenomeWigs/hs37d5.triplets.")#"/srv/gs1/projects/snyder/collinmelton/bundle/2.3/b37/d5/hs37d5.triplets.") #
+                      metavar="FILE", type="string", default="./humang1kv37.singlets")#"/srv/gsfs0/projects/snyder/collinmelton/RecurrentMutationDecectionAlgorithm/WholeGenomeWigs/hs37d5.triplets.")#"/srv/gs1/projects/snyder/collinmelton/bundle/2.3/b37/d5/hs37d5.triplets.") #
     parser.add_option("--T", dest="triplets", help="True if tripets",
                       metavar="STRING", type="string", default="F") 
     (options, args) = parser.parse_args()

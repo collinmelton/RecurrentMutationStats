@@ -11,11 +11,10 @@ class header:
         self.currentline=0
         
     def getLine(self, pos):
-#         print "start", self.start
-#         print "stop", self.stop
-#         print (pos-self.start)/self.step
         index=(pos-self.start)/self.step
         if index<0 or index>=self.numLines:
+            print pos, self.start, self.step
+            print (pos-self.start)/self.step
             print "getLine index wrong!!!!!", index
             return None
         return self.lines[(pos-self.start)/self.step]
@@ -26,10 +25,14 @@ class OverlapWig:
         self.filename = filename
         self.seenchroms=set()
         self.headerNum=0
+        self.filePipe=None
         self.initialize()
+        
 
     def initialize(self):
         if self.headerNum>1 or self.headerNum==0:
+            if self.filePipe!=None:
+                self.filePipe.close()
             print "initializing"    
             self.currentHeader=None
             self.nextHeader=None
@@ -48,15 +51,19 @@ class OverlapWig:
             self.getNextHeader()
 
     def getWigResults(self, chrom, pos):
+#         if self.currentHeader.start==25150831:
+#             print self.currentHeader.start, self.currentHeader.stop, self.currentHeader.step, len(self.currentHeader.lines)
         # if header doesn't exist, get next header
         if self.currentHeader==None:
             if not self.getNextHeader(): self.initialize()
-        # while chrom isn't right get next header
+        # iterate through headers until you get one with same chromosome
         while chrom !=self.currentHeader.chrom:
+            # try to get next header
             if not self.getNextHeader(): 
+                # if chrom not in file return none
                 if chrom not in self.seenchroms: return None
                 # restart at beginning if chrom has been seen before
-                self.filePipe.close()
+#                 self.filePipe.close()
                 self.initialize()
                 # find chrom
                 while chrom !=self.currentHeader.chrom:
@@ -64,18 +71,20 @@ class OverlapWig:
 		            if not self.getNextHeader(): return None
         # if position below current header restart
         if pos<self.currentHeader.start:
-            self.filePipe.close()
+#             self.filePipe.close()
             self.initialize()
             # find chrom
             while chrom !=self.currentHeader.chrom:
 				if not self.getNextHeader(): return None
+            # if position lower than any for chrom return None
             if pos<self.currentHeader.start: return None       
-        # if position is between current and next header, return None
-        if self.nextHeader != None:
-            if pos>=self.currentHeader.stop and pos < self.nextHeader.start:
-                return None
         # find header with position
         while pos>=self.currentHeader.stop:
+            if chrom!=self.currentHeader.chrom: return None
+            # if position is between current and next header, return None
+            if self.nextHeader != None:
+                if pos>=self.currentHeader.stop and pos < self.nextHeader.start:
+                    return None
             if not self.getNextHeader(): return None
         # if position is in current header
         result=self.currentHeader.getLine(pos).strip()
@@ -112,7 +121,10 @@ class OverlapWig:
             i+=1
         self.currentHeader=header(chrom, int(start), int(step), lines)
         if "fixedStep" in self.nextline:
+#             print self.nextline
+#             print self.nextline.split(" ")[1:4]
             chrom, start, step=map(lambda x: x.split("=")[1].strip().strip("chr"), self.nextline.split(" ")[1:4])
+            
             self.nextHeader=header(chrom, int(start), int(step), [])
         else:
             self.nextHeader=header(chrom, int(int(start)+int(step)*linelimit/2), int(step), [])
